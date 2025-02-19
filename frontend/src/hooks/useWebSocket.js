@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 
-const useWebSocket = (url) => {
-    const [messages, setMessages] = useState([]);
+export default function useWebSocket() {
     const [bestMove, setBestMove] = useState(null);
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        const ws = new WebSocket(url);
-        setSocket(ws);
+        const ws = new WebSocket("ws://4.248.203.4:3000"); // Use Azure VM WebSocket URL
 
         ws.onopen = () => {
             console.log("Connected to WebSocket server");
@@ -17,28 +15,29 @@ const useWebSocket = (url) => {
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                console.log("Message from server:", data);
-
                 if (data.bestMove) {
                     setBestMove(data.bestMove);
-                }
-
-                if (typeof data.message === "string") {
-                    setMessages((prev) => [...prev, data.message]);
-                } else {
-                    setMessages((prev) => [...prev, JSON.stringify(data)]);
                 }
             } catch (error) {
                 console.error("Invalid JSON received:", event.data);
             }
         };
 
+        ws.onerror = (error) => console.error("WebSocket error:", error);
         ws.onclose = () => console.log("Disconnected from WebSocket server");
 
-        return () => ws.close();
-    }, [url]);
+        setSocket(ws);
 
-    return { bestMove, messages, socket };
-};
+        return () => {
+            ws.close();
+        };
+    }, []);
 
-export default useWebSocket;
+    const sendMove = (fen) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "move", fen }));
+        }
+    };
+
+    return { bestMove, sendMove };
+}

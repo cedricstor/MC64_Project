@@ -1,13 +1,14 @@
 import React from "react";
-import Board from "./components/Board"; 
+import ChessBoard from "./components/Board";
+import WebSocketMessages from "./components/WebSocketMessages";
+import "./App.css";
 
-function App() {
+export default function App() {
     return (
         <div className="app-container">
             <h1>MC64 Chess Application</h1>
-            <Board />
+            <ChessBoard />
+            <WebSocketMessages />
         </div>
     );
 }
-
-export default App;
