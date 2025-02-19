@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+.env
+frontend/build/
+backend/node_modules/
+esp32_firmware/.pio/
+esp32_firmware/.vscode/
+stockfish_server/__pycache__/
