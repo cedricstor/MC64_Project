@@ -1,43 +1,65 @@
-import { useEffect, useState } from "react";
 
-export default function useWebSocket() {
+import { useEffect, useState, useRef } from "react";
+
+export default function useWebSockets() {
+    const [messages, setMessages] = useState([]);
     const [bestMove, setBestMove] = useState(null);
-    const [socket, setSocket] = useState(null);
+    const wsRef = useRef(null);
 
     useEffect(() => {
-        const ws = new WebSocket("ws://4.248.203.4:3000"); // Use Azure VM WebSocket URL
+        // Initialize WebSocket connection
+        wsRef.current = new WebSocket(import.meta.env.VITE_WEBSOCKET_URL);
 
-        ws.onopen = () => {
-            console.log("Connected to WebSocket server");
-            ws.send(JSON.stringify({ type: "connect", message: "Frontend connected" }));
+        wsRef.current.onopen = () => {
+            console.log("Connected to WebSocket server!");
+            wsRef.current.send(JSON.stringify({ type: "info", message: "Frontend connected" }));
         };
 
-        ws.onmessage = (event) => {
+        wsRef.current.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                if (data.bestMove) {
-                    setBestMove(data.bestMove);
+                console.log("Received message:", data);
+
+                switch (data.type) {
+                    case "bestMove":
+                        setBestMove(data.move);
+                        break;
+                    case "error":
+                        console.error("Error from server:", data.message);
+                        break;
+                    default:
+                        setMessages((prev) => [...prev, JSON.stringify(data)]);
                 }
             } catch (error) {
-                console.error("Invalid JSON received:", event.data);
+                console.error("Failed to parse WebSocket message:", error);
             }
         };
 
-        ws.onerror = (error) => console.error("WebSocket error:", error);
-        ws.onclose = () => console.log("Disconnected from WebSocket server");
+        wsRef.current.onerror = (error) => {
+            console.error("WebSocket error:", error);
+        };
 
-        setSocket(ws);
+        wsRef.current.onclose = () => {
+            console.log("Disconnected from WebSocket server");
+        };
 
+        // Cleanup on component unmount
         return () => {
-            ws.close();
+            if (wsRef.current) {
+                wsRef.current.close();
+            }
         };
     }, []);
 
+    // Send move to WebSocket server
     const sendMove = (fen) => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "move", fen }));
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            console.log("Sending move...");
+            wsRef.current.send(JSON.stringify({ type: "move", fen }));
+        } else {
+            console.error("WebSocket is not connected.");
         }
     };
 
-    return { bestMove, sendMove };
+    return { messages, bestMove, sendMove };
 }

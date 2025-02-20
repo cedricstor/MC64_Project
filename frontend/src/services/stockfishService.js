@@ -1,19 +1,12 @@
-const WEBSOCKET_URL = "ws://4.248.203.4:8080";
+const BACKEND_URL = "http://4.248.203.4:5000";
 
-export function connectToStockfish(onMessage) {
-    const ws = new WebSocket(WEBSOCKET_URL);
+export async function getBestMove(fen) {
+    const response = await fetch(`${BACKEND_URL}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fen }),
+    });
 
-    ws.onopen = () => {
-        console.log("Connected to remote Stockfish server");
-    };
-
-    ws.onmessage = (event) => {
-        onMessage(event.data);
-    };
-
-    ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-    };
-
-    return ws;
+    if (!response.ok) throw new Error("Failed to get best move.");
+    return await response.json();
 }
