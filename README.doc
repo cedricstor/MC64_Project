@@ -1,0 +1,13 @@
+# README
+
+Node and npm
+-v (version)
+
+
+cd /Users/CedricBendavid/MC64_Project/myfirstchessapp
+    npm start
+
+git --version
+
+npm run build
+npm run deploy
